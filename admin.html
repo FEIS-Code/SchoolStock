@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchoolStock — Admin</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap'); body{font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<header class="bg-white shadow-md p-3 sm:p-4 sticky top-0 z-20">
+  <div class="max-w-5xl mx-auto flex justify-between items-center">
+    <h1 class="text-base sm:text-xl font-extrabold"><span class="text-red-800">SchoolStock</span> <span class="text-gray-600">Admin</span></h1>
+    <div class="flex items-center gap-2">
+      <span id="user-badge" class="hidden text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded-full"></span>
+      <button id="logout-btn" onclick="logout()" class="hidden px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold">Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div id="login-screen" class="max-w-sm mx-auto mt-20 p-3">
+  <div class="bg-white rounded-xl shadow-lg p-6">
+    <h2 class="text-lg font-bold text-indigo-600 mb-4 text-center">Admin Login</h2>
+    <form id="login-form" class="space-y-3">
+      <input id="login-user" type="text" required placeholder="Username" class="w-full rounded-lg border p-2.5 text-sm">
+      <input id="login-pass" type="password" required placeholder="Password" class="w-full rounded-lg border p-2.5 text-sm">
+      <p id="login-error" class="text-red-600 text-xs hidden"></p>
+      <button type="submit" class="w-full py-2.5 bg-indigo-600 text-white font-semibold rounded-lg text-sm">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="hidden">
+  <div class="max-w-5xl mx-auto px-3 pt-3">
+    <div class="flex gap-1 border-b overflow-x-auto">
+      <button onclick="tab('inv')" data-tab="inv" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Inventory</button>
+      <button onclick="tab('low')" data-tab="low" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">⚠ Low Stock</button>
+      <button onclick="tab('hist')" data-tab="hist" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">History</button>
+      <button onclick="tab('stats')" data-tab="stats" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">Stats</button>
+      <button onclick="tab('settings')" data-tab="settings" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">Settings</button>
+    </div>
+  </div>
+  <main class="max-w-5xl mx-auto p-3 sm:p-6">
+
+    <!-- INVENTORY TAB -->
+    <div id="t-inv">
+      <div class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="search" type="text" placeholder="Search..." oninput="renderInv()" class="flex-1 px-3 py-2 border rounded-lg text-sm">
+        <select id="fcat" onchange="renderInv()" class="px-3 py-2 border rounded-lg text-sm"><option value="">All Categories</option></select>
+        <button onclick="openAdd()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold whitespace-nowrap">+ Add Item</button>
+      </div>
+      <div id="inv-list" class="space-y-2"></div>
+    </div>
+
+    <!-- LOW STOCK TAB -->
+    <div id="t-low" class="hidden"><div id="low-list" class="space-y-2"></div><p id="no-low" class="hidden text-center text-green-600 py-8 font-medium">All stock levels are healthy! ✓</p></div>
+
+    <!-- HISTORY TAB -->
+    <div id="t-hist" class="hidden">
+      <div class="overflow-x-auto bg-white rounded-xl shadow">
+        <table class="w-full text-xs sm:text-sm">
+          <thead><tr class="bg-gray-50 text-gray-600"><th class="p-2 text-left">Date</th><th class="p-2 text-left">Item</th><th class="p-2">Action</th><th class="p-2">Qty</th><th class="p-2 text-left">Notes</th><th class="p-2">By</th></tr></thead>
+          <tbody id="hist-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div id="t-stats" class="hidden">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-indigo-600" id="s-items">0</div><div class="text-xs text-gray-500">Items</div></div>
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-blue-600" id="s-qty">0</div><div class="text-xs text-gray-500">Total Qty</div></div>
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-amber-500" id="s-low">0</div><div class="text-xs text-gray-500">Low Stock</div></div>
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-red-500" id="s-out">0</div><div class="text-xs text-gray-500">Out of Stock</div></div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4"><h3 class="font-bold text-sm mb-2">By Category</h3><div id="s-cats"></div></div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="t-settings" class="hidden space-y-4">
+      <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="font-bold text-sm mb-2">Categories</h3>
+        <div id="cat-tags" class="flex flex-wrap gap-2 mb-2"></div>
+        <div class="flex gap-2"><input id="new-cat" type="text" placeholder="New" class="rounded border p-2 text-sm flex-1"><button onclick="addTag('cat')" class="text-indigo-600 text-sm font-medium">+ Add</button></div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="font-bold text-sm mb-2">Locations</h3>
+        <div id="loc-tags" class="flex flex-wrap gap-2 mb-2"></div>
+        <div class="flex gap-2"><input id="new-loc" type="text" placeholder="New" class="rounded border p-2 text-sm flex-1"><button onclick="addTag('loc')" class="text-indigo-600 text-sm font-medium">+ Add</button></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="saveSettings()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold">Save</button>
+        <button onclick="runSetup()" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold">Setup Data</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div id="item-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 overflow-y-auto">
+  <div class="bg-white p-5 rounded-xl shadow-2xl w-full max-w-md m-auto">
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
+      <h2 id="modal-title" class="text-lg font-bold text-indigo-600">Add Item</h2>
+      <button onclick="closeM('item-modal')" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <form id="item-form" class="space-y-3">
+      <input type="hidden" id="item-id">
+      <div><label class="text-xs font-medium text-gray-700">Name</label><input id="item-name" required class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-medium text-gray-700">Category</label><select id="item-cat" class="w-full rounded-lg border p-2 text-sm mt-1"></select></div>
+        <div><label class="text-xs font-medium text-gray-700">Location</label><select id="item-loc" class="w-full rounded-lg border p-2 text-sm mt-1"></select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-medium text-gray-700">Quantity</label><input id="item-qty" type="number" min="0" required class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+        <div><label class="text-xs font-medium text-gray-700">Min Stock Alert</label><input id="item-min" type="number" min="0" value="5" class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      </div>
+      <div><label class="text-xs font-medium text-gray-700">Notes</label><input id="item-notes" class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      <button type="submit" id="item-btn" class="w-full py-2.5 bg-indigo-600 text-white font-semibold rounded-lg text-sm">Save</button>
+    </form>
+  </div>
+</div>
+
+<!-- CHECK-OUT/IN MODAL -->
+<div id="io-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4">
+  <div class="bg-white p-5 rounded-xl shadow-2xl w-full max-w-sm">
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
+      <h2 id="io-title" class="text-lg font-bold">Check Out</h2>
+      <button onclick="closeM('io-modal')" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <form id="io-form" class="space-y-3">
+      <input type="hidden" id="io-id"><input type="hidden" id="io-action">
+      <div><label class="text-xs font-medium text-gray-700">Quantity</label><input id="io-qty" type="number" min="1" value="1" required class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      <div><label class="text-xs font-medium text-gray-700" id="io-person-label">Borrower</label><input id="io-person" class="w-full rounded-lg border p-2 text-sm mt-1" placeholder="Name"></div>
+      <div><label class="text-xs font-medium text-gray-700">Reason/Notes</label><input id="io-reason" class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      <button type="submit" id="io-btn" class="w-full py-2.5 text-white font-semibold rounded-lg text-sm bg-indigo-600">Submit</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'YOUR_SCRIPT_URL';
+let inventory=[],categories=[],locations=[],history=[],currentUser=null;
+const F=url=>fetch(url,{redirect:'follow'}).then(r=>r.json());
+const P=(body)=>fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...body,auth:{username:currentUser.username,password:currentUser._pw}})});
+
+async function loadData(){
+  const [inv,cats,locs]=await Promise.all([F(SCRIPT_URL+'?action=inventory'),F(SCRIPT_URL+'?action=categories'),F(SCRIPT_URL+'?action=locations')]);
+  inventory=inv;categories=cats;locations=locs;
+  document.getElementById('fcat').innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('item-cat').innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('item-loc').innerHTML=locs.map(l=>`<option>${l}</option>`).join('');
+  renderInv();
+}
+
+function renderInv(){
+  const s=document.getElementById('search').value.toLowerCase(),c=document.getElementById('fcat').value;
+  const f=inventory.filter(i=>(!c||i.Category===c)&&(!s||i.Name.toLowerCase().includes(s)));
+  document.getElementById('inv-list').innerHTML=f.map(i=>{
+    const q=parseInt(i.Quantity)||0,min=parseInt(i.MinStock)||5;
+    const bc=q===0?'border-red-500':q<=min?'border-amber-500':'border-green-500';
+    const badge=q===0?'bg-red-100 text-red-700':q<=min?'bg-amber-100 text-amber-700':'bg-green-100 text-green-700';
+    const label=q===0?'Out':q<=min?'Low':'OK';
+    return `<div class="bg-white rounded-lg shadow p-3 border-l-4 ${bc} flex flex-col sm:flex-row sm:items-center gap-2">
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-sm truncate">${i.Name}</div>
+        <div class="text-xs text-gray-500">${i.Category} · ${i.Location}</div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <span class="text-lg font-bold">${q}</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${badge}">${label}</span>
+        <button onclick="openIO('${i.ID}','checkout')" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">Out</button>
+        <button onclick="openIO('${i.ID}','checkin')" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">In</button>
+        <button onclick="openEdit('${i.ID}')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-gray-200">Edit</button>
+        <button onclick="del('${i.ID}')" class="px-2 py-1 text-red-400 text-xs hover:text-red-600">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function renderLow(){
+  const low=await F(SCRIPT_URL+'?action=lowstock');
+  document.getElementById('no-low').classList.toggle('hidden',low.length>0);
+  document.getElementById('low-list').innerHTML=low.map(i=>{
+    const q=parseInt(i.Quantity)||0;
+    return `<div class="bg-white rounded-lg shadow p-3 border-l-4 ${q===0?'border-red-500':'border-amber-500'}">
+      <div class="font-semibold text-sm">${i.Name} <span class="text-xs ${q===0?'text-red-600':'text-amber-600'}">(${q===0?'OUT OF STOCK':'Low: '+q+'/'+i.MinStock})</span></div>
+      <div class="text-xs text-gray-500">${i.Category} · ${i.Location}</div>
+    </div>`;
+  }).join('');
+}
+
+async function renderHist(){
+  history=await F(SCRIPT_URL+'?action=history');
+  const h=history.slice().reverse();
+  document.getElementById('hist-body').innerHTML=h.map(r=>{
+    const ac=r.Action==='CHECK-OUT'?'text-red-600':r.Action==='CHECK-IN'?'text-green-600':r.Action==='DELETED'?'text-gray-400':'text-blue-600';
+    return `<tr class="border-t"><td class="p-2 whitespace-nowrap">${r.Date}</td><td class="p-2">${r.ItemName}</td><td class="p-2 text-center font-semibold ${ac}">${r.Action}</td><td class="p-2 text-center">${r.Quantity}</td><td class="p-2">${r.Notes}</td><td class="p-2 text-center">${r.User}</td></tr>`;
+  }).join('');
+}
+
+async function renderStats(){
+  const s=await F(SCRIPT_URL+'?action=stats');
+  document.getElementById('s-items').textContent=s.totalItems;
+  document.getElementById('s-qty').textContent=s.totalQuantity;
+  document.getElementById('s-low').textContent=s.lowStock;
+  document.getElementById('s-out').textContent=s.outOfStock;
+  document.getElementById('s-cats').innerHTML=Object.entries(s.categories).map(([k,v])=>`<div class="flex justify-between text-sm py-1 border-b"><span>${k}</span><span class="font-bold">${v}</span></div>`).join('');
+}
+
+// --- Modals ---
+function openM(id){const m=document.getElementById(id);m.classList.remove('hidden');m.classList.add('flex');}
+function closeM(id){const m=document.getElementById(id);m.classList.add('hidden');m.classList.remove('flex');}
+
+function openAdd(){
+  document.getElementById('modal-title').textContent='Add Item';
+  document.getElementById('item-id').value='';
+  document.getElementById('item-form').reset();
+  document.getElementById('item-min').value='5';
+  openM('item-modal');
+}
+function openEdit(id){
+  const i=inventory.find(x=>x.ID===id); if(!i) return;
+  document.getElementById('modal-title').textContent='Edit Item';
+  document.getElementById('item-id').value=id;
+  document.getElementById('item-name').value=i.Name;
+  document.getElementById('item-cat').value=i.Category;
+  document.getElementById('item-loc').value=i.Location;
+  document.getElementById('item-qty').value=i.Quantity;
+  document.getElementById('item-min').value=i.MinStock;
+  document.getElementById('item-notes').value=i.Notes||'';
+  openM('item-modal');
+}
+async function handleItem(e){
+  e.preventDefault();
+  const id=document.getElementById('item-id').value;
+  const d={name:document.getElementById('item-name').value,category:document.getElementById('item-cat').value,location:document.getElementById('item-loc').value,quantity:document.getElementById('item-qty').value,minStock:document.getElementById('item-min').value,notes:document.getElementById('item-notes').value};
+  if(id){d.action='updateItem';d.id=id;} else d.action='addItem';
+  await P(d); closeM('item-modal'); alert('Saved!'); setTimeout(loadData,2000);
+}
+async function del(id){if(!confirm('Delete this item?'))return; await P({action:'deleteItem',id}); alert('Deleted!'); setTimeout(loadData,2000);}
+
+function openIO(id,action){
+  document.getElementById('io-id').value=id;
+  document.getElementById('io-action').value=action;
+  document.getElementById('io-title').textContent=action==='checkout'?'Check Out':'Check In';
+  document.getElementById('io-title').className='text-lg font-bold '+(action==='checkout'?'text-red-600':'text-green-600');
+  document.getElementById('io-person-label').textContent=action==='checkout'?'Borrower':'Returned By';
+  document.getElementById('io-btn').className='w-full py-2.5 text-white font-semibold rounded-lg text-sm '+(action==='checkout'?'bg-red-600 hover:bg-red-700':'bg-green-600 hover:bg-green-700');
+  document.getElementById('io-form').reset(); document.getElementById('io-qty').value='1';
+  openM('io-modal');
+}
+async function handleIO(e){
+  e.preventDefault();
+  const action=document.getElementById('io-action').value;
+  const d={action,id:document.getElementById('io-id').value,quantity:document.getElementById('io-qty').value};
+  if(action==='checkout') d.borrower=document.getElementById('io-person').value;
+  else d.returnedBy=document.getElementById('io-person').value;
+  d.reason=document.getElementById('io-reason').value;
+  await P(d); closeM('io-modal'); alert('Done!'); setTimeout(loadData,2000);
+}
+
+// --- Tags ---
+function renderTags(){
+  document.getElementById('cat-tags').innerHTML=categories.map((c,i)=>`<span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full text-xs">${c}<button onclick="categories.splice(${i},1);renderTags()" class="hover:text-red-500">&times;</button></span>`).join('');
+  document.getElementById('loc-tags').innerHTML=locations.map((l,i)=>`<span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs">${l}<button onclick="locations.splice(${i},1);renderTags()" class="hover:text-red-500">&times;</button></span>`).join('');
+}
+function addTag(t){
+  const el=document.getElementById('new-'+t),v=el.value.trim();
+  if(!v)return; if(t==='cat'&&!categories.includes(v))categories.push(v); if(t==='loc'&&!locations.includes(v))locations.push(v);
+  el.value=''; renderTags();
+}
+async function saveSettings(){
+  await Promise.all([P({action:'saveCategories',items:categories}),P({action:'saveLocations',items:locations})]);
+  alert('Saved!'); setTimeout(loadData,2000);
+}
+async function runSetup(){if(!confirm('Reset all data?'))return; await P({action:'setupData'}); alert('Done!'); setTimeout(loadData,3000);}
+
+// --- Tabs ---
+function tab(t){
+  ['inv','low','hist','stats','settings'].forEach(id=>document.getElementById('t-'+id).classList.toggle('hidden',id!==t));
+  document.querySelectorAll('.tbtn').forEach(b=>{const a=b.dataset.tab===t;b.className=`tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap ${a?'border-indigo-600 text-indigo-600':'border-transparent text-gray-500'}`;});
+  if(t==='low')renderLow(); if(t==='hist')renderHist(); if(t==='stats')renderStats(); if(t==='settings')renderTags();
+}
+
+// --- Auth ---
+async function handleLogin(e){
+  e.preventDefault();
+  const u=document.getElementById('login-user').value.trim(),p=document.getElementById('login-pass').value.trim();
+  try{
+    const r=await(await fetch(SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'login',username:u,password:p})})).json();
+    if(r.success&&r.role==='admin'){currentUser={...r,_pw:p};sessionStorage.setItem('ssAdmin',JSON.stringify(currentUser));showAdmin();}
+    else{document.getElementById('login-error').textContent=r.message||'Admin only';document.getElementById('login-error').classList.remove('hidden');}
+  }catch(e){document.getElementById('login-error').textContent='Error';document.getElementById('login-error').classList.remove('hidden');}
+}
+function logout(){currentUser=null;sessionStorage.removeItem('ssAdmin');location.reload();}
+function showAdmin(){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('admin').classList.remove('hidden');
+  document.getElementById('user-badge').textContent=currentUser.displayName;
+  document.getElementById('user-badge').classList.remove('hidden');
+  document.getElementById('logout-btn').classList.remove('hidden');
+  loadData();
+}
+
+window.onload=function(){
+  const s=sessionStorage.getItem('ssAdmin');
+  if(s){currentUser=JSON.parse(s);showAdmin();}
+  document.getElementById('login-form').addEventListener('submit',handleLogin);
+  document.getElementById('item-form').addEventListener('submit',handleItem);
+  document.getElementById('io-form').addEventListener('submit',handleIO);
+  lucide.createIcons();
+};
+</script>
+</body>
+</html>

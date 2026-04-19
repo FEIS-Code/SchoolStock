@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchoolStock — FEIS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap'); body{font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<header class="bg-white shadow-md p-3 sm:p-4">
+  <div class="max-w-5xl mx-auto flex justify-between items-center">
+    <h1 class="text-base sm:text-2xl font-extrabold"><span class="text-red-800">FEIS</span> <span class="text-gray-600">SchoolStock</span></h1>
+    <a href="admin.html" class="text-xs text-indigo-600 hover:underline">Admin →</a>
+  </div>
+</header>
+<main class="max-w-5xl mx-auto p-3 sm:p-6">
+  <div class="flex flex-col sm:flex-row gap-2 mb-4">
+    <input id="search" type="text" placeholder="Search items..." oninput="render()" class="flex-1 px-3 py-2 border rounded-lg text-sm">
+    <select id="filter-cat" onchange="render()" class="px-3 py-2 border rounded-lg text-sm"><option value="">All Categories</option></select>
+    <select id="filter-loc" onchange="render()" class="px-3 py-2 border rounded-lg text-sm"><option value="">All Locations</option></select>
+  </div>
+  <div id="items" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+  <p id="empty" class="hidden text-center text-gray-400 py-8">No items found.</p>
+</main>
+<footer class="max-w-5xl mx-auto px-3 py-6 text-center text-gray-500">
+  <p class="font-semibold mb-1">An App by <span class="text-indigo-600 font-bold">Team Young Champions</span></p>
+  <p class="text-xs">Dhanaharshini &amp; Hari Charan (Grade 9) &bull; Hamsitha Reddy (Grade 8)</p>
+  <p class="text-xs">Deshik Ratan, Dheeraj &amp; Dhruva Ram (Grade 7)</p>
+  <p class="text-xs text-gray-400 mt-1">Mentor: Ms. Manasa</p>
+</footer>
+<script>
+const SCRIPT_URL = 'YOUR_SCRIPT_URL';
+let inventory=[], categories=[], locations=[];
+async function load() {
+  try {
+    const [inv,cats,locs] = await Promise.all([
+      fetch(SCRIPT_URL+'?action=inventory',{redirect:'follow'}).then(r=>r.json()),
+      fetch(SCRIPT_URL+'?action=categories',{redirect:'follow'}).then(r=>r.json()),
+      fetch(SCRIPT_URL+'?action=locations',{redirect:'follow'}).then(r=>r.json())
+    ]);
+    inventory=inv; categories=cats; locations=locs;
+    document.getElementById('filter-cat').innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+    document.getElementById('filter-loc').innerHTML='<option value="">All Locations</option>'+locs.map(l=>`<option>${l}</option>`).join('');
+    render();
+  } catch(e) { document.getElementById('items').innerHTML='<p class="text-red-500 col-span-full text-center py-8">Error loading.</p>'; }
+}
+function render() {
+  const s=document.getElementById('search').value.toLowerCase(), c=document.getElementById('filter-cat').value, l=document.getElementById('filter-loc').value;
+  const f=inventory.filter(i=>{
+    if(c&&i.Category!==c) return false;
+    if(l&&i.Location!==l) return false;
+    if(s&&!(i.Name||'').toLowerCase().includes(s)) return false;
+    return true;
+  });
+  document.getElementById('empty').classList.toggle('hidden',f.length>0);
+  document.getElementById('items').innerHTML=f.map(i=>{
+    const q=parseInt(i.Quantity)||0, min=parseInt(i.MinStock)||5;
+    const color=q===0?'bg-red-100 text-red-700 border-red-300':q<=min?'bg-amber-100 text-amber-700 border-amber-300':'bg-green-100 text-green-700 border-green-300';
+    const badge=q===0?'Out of Stock':q<=min?'Low Stock':'In Stock';
+    return `<div class="bg-white rounded-xl shadow p-4 border-l-4 ${q===0?'border-red-500':q<=min?'border-amber-500':'border-green-500'}">
+      <div class="flex justify-between items-start mb-2">
+        <h3 class="font-bold text-sm text-gray-800">${i.Name}</h3>
+        <span class="text-xs px-2 py-0.5 rounded-full border ${color}">${badge}</span>
+      </div>
+      <div class="grid grid-cols-2 gap-1 text-xs text-gray-500">
+        <div><span class="font-medium">Qty:</span> <span class="font-bold text-gray-800 text-sm">${q}</span></div>
+        <div><span class="font-medium">Min:</span> ${min}</div>
+        <div><span class="font-medium">Category:</span> ${i.Category}</div>
+        <div><span class="font-medium">Location:</span> ${i.Location}</div>
+      </div>
+      ${i.Notes?`<p class="text-xs text-gray-400 mt-2">${i.Notes}</p>`:''}
+    </div>`;
+  }).join('');
+}
+window.onload=function(){load();lucide.createIcons();};
+</script>
+</body>
+</html>
