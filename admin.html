@@ -142,7 +142,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = 'YOUR_SCRIPT_URL';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5U1ZFz66HMoMzwE5gTMGj1age5ZRFFIQvgnpg-ID9UMa_tagNgz1Ark6PSVkgPIC5/exec';
 let inventory=[],categories=[],locations=[],history=[],currentUser=null;
 const F=url=>fetch(url,{redirect:'follow'}).then(r=>r.json());
 const P=(body)=>fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...body,auth:{username:currentUser.username,password:currentUser._pw}})});
