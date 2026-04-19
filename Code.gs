@@ -113,6 +113,7 @@ function updateItem(data) {
       if (data.quantity !== undefined) sheet.getRange(row, 5).setValue(parseInt(data.quantity)||0);
       if (data.minStock !== undefined) sheet.getRange(row, 6).setValue(parseInt(data.minStock)||5);
       if (data.notes !== undefined) sheet.getRange(row, 9).setValue(data.notes);
+      logHistory(data.id, data.name || all[i][1], 'UPDATED', data.quantity || all[i][4], 'Item edited', data.auth.username);
       return {success:true};
     }
   }
