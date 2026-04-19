@@ -146,6 +146,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5U1ZFz66HMoMzwE5gT
 let inventory=[],categories=[],locations=[],history=[],currentUser=null;
 const F=url=>fetch(url,{redirect:'follow'}).then(r=>r.json());
 const P=(body)=>fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...body,auth:{username:currentUser.username,password:currentUser._pw}})});
+function toast(msg){const t=document.createElement('div');t.className='fixed top-4 right-4 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
 
 async function loadData(){
   const [inv,cats,locs]=await Promise.all([F(SCRIPT_URL+'?action=inventory'),F(SCRIPT_URL+'?action=categories'),F(SCRIPT_URL+'?action=locations')]);
@@ -239,9 +240,9 @@ async function handleItem(e){
   const id=document.getElementById('item-id').value;
   const d={name:document.getElementById('item-name').value,category:document.getElementById('item-cat').value,location:document.getElementById('item-loc').value,quantity:document.getElementById('item-qty').value,minStock:document.getElementById('item-min').value,notes:document.getElementById('item-notes').value};
   if(id){d.action='updateItem';d.id=id;} else d.action='addItem';
-  await P(d); closeM('item-modal'); alert('Saved!'); setTimeout(loadData,2000);
+  await P(d); closeM('item-modal'); toast('Saved!'); setTimeout(loadData,1500);
 }
-async function del(id){if(!confirm('Delete this item?'))return; await P({action:'deleteItem',id}); alert('Deleted!'); setTimeout(loadData,2000);}
+async function del(id){if(!confirm('Delete this item?'))return; await P({action:'deleteItem',id}); toast('Deleted!'); setTimeout(loadData,1500);}
 
 function openIO(id,action){
   document.getElementById('io-id').value=id;
@@ -260,7 +261,7 @@ async function handleIO(e){
   if(action==='checkout') d.borrower=document.getElementById('io-person').value;
   else d.returnedBy=document.getElementById('io-person').value;
   d.reason=document.getElementById('io-reason').value;
-  await P(d); closeM('io-modal'); alert('Done!'); setTimeout(loadData,2000);
+  await P(d); closeM('io-modal'); toast('Done!'); setTimeout(loadData,1500);
 }
 
 // --- Tags ---
@@ -275,9 +276,9 @@ function addTag(t){
 }
 async function saveSettings(){
   await Promise.all([P({action:'saveCategories',items:categories}),P({action:'saveLocations',items:locations})]);
-  alert('Saved!'); setTimeout(loadData,2000);
+  toast('Saved!'); setTimeout(loadData,1500);
 }
-async function runSetup(){if(!confirm('Reset all data?'))return; await P({action:'setupData'}); alert('Done!'); setTimeout(loadData,3000);}
+async function runSetup(){if(!confirm('Reset all data?'))return; await P({action:'setupData'}); toast('Setup complete!'); setTimeout(loadData,2500);}
 
 // --- Tabs ---
 function tab(t){
