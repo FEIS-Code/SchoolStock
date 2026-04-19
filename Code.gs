@@ -54,26 +54,39 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  var data = JSON.parse(e.postData.contents);
-  var auth = login(data.auth ? data.auth.username : data.username, data.auth ? data.auth.password : data.password);
-  if (!auth.success || auth.role !== 'admin') {
-    if (data.action === 'login') return ContentService.createTextOutput(JSON.stringify(auth)).setMimeType(ContentService.MimeType.JSON);
-    return ContentService.createTextOutput(JSON.stringify({success:false,message:'Unauthorized'})).setMimeType(ContentService.MimeType.JSON);
+  try {
+    var data = JSON.parse(e.postData.contents);
+    
+    // Login doesn't need pre-auth
+    if (data.action === 'login') {
+      var loginResult = login(data.username, data.password);
+      return ContentService.createTextOutput(JSON.stringify(loginResult)).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // All other actions need admin auth
+    var authUser = data.auth ? data.auth.username : data.username;
+    var authPass = data.auth ? data.auth.password : data.password;
+    var auth = login(authUser, authPass);
+    if (!auth.success || auth.role !== 'admin') {
+      return ContentService.createTextOutput(JSON.stringify({success:false,message:'Unauthorized: '+auth.message})).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var result;
+    switch (data.action) {
+      case 'addItem': result = addItem(data); break;
+      case 'updateItem': result = updateItem(data); break;
+      case 'deleteItem': result = deleteItem(data); break;
+      case 'checkout': result = checkout(data); break;
+      case 'checkin': result = checkin(data); break;
+      case 'saveCategories': result = saveList(CATEGORIES_SHEET, 'Category', data.items); break;
+      case 'saveLocations': result = saveList(LOCATIONS_SHEET, 'Location', data.items); break;
+      case 'setupData': setupData(); result = {success:true}; break;
+      default: result = {error:'Unknown action: '+data.action};
+    }
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({success:false,error:err.toString(),stack:err.stack})).setMimeType(ContentService.MimeType.JSON);
   }
-  var result;
-  switch (data.action) {
-    case 'login': result = auth; break;
-    case 'addItem': result = addItem(data); break;
-    case 'updateItem': result = updateItem(data); break;
-    case 'deleteItem': result = deleteItem(data); break;
-    case 'checkout': result = checkout(data); break;
-    case 'checkin': result = checkin(data); break;
-    case 'saveCategories': result = saveList(CATEGORIES_SHEET, 'Category', data.items); break;
-    case 'saveLocations': result = saveList(LOCATIONS_SHEET, 'Location', data.items); break;
-    case 'setupData': setupData(); result = {success:true}; break;
-    default: result = {error:'Unknown'};
-  }
-  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
 
 // --- Inventory CRUD ---

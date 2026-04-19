@@ -145,7 +145,10 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyOApRPB5icJy7F_F9n-_2lnHAk6I-3u4eITCObvDPZwiW7u9rgEMZ06_HtW_SngOvT/exec';
 let inventory=[],categories=[],locations=[],history=[],currentUser=null;
 const F=url=>fetch(url,{redirect:'follow'}).then(r=>r.json());
-const P=(body)=>fetch(SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...body,auth:{username:currentUser.username,password:currentUser._pw}})});
+const P=async(body)=>{
+  const r=await fetch(SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...body,auth:{username:currentUser.username,password:currentUser._pw}})});
+  try{const j=await r.json();console.log('Response:',j);if(j.error)console.error('Server error:',j.error);return j;}catch(e){return{};}
+};
 function toast(msg){const t=document.createElement('div');t.className='fixed top-4 right-4 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
 function showLoading(id){document.getElementById(id).innerHTML='<div class="flex justify-center items-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div><span class="ml-3 text-gray-500 text-sm">Loading...</span></div>';}
 
