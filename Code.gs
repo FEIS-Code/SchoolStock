@@ -3,7 +3,7 @@
 // Five Elements International School — Team Young Champions
 // ============================================================
 
-const SPREADSHEET_ID = ''; // SET YOUR SPREADSHEET ID
+const SPREADSHEET_ID = '1FQSzygdNOaRLmaZfLa9yYYuggTZ4EFgsE29U1dXbxYQ';
 const INVENTORY_SHEET = 'Inventory';
 const HISTORY_SHEET = 'History';
 const CATEGORIES_SHEET = 'Categories';
