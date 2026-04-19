@@ -145,8 +145,8 @@ function checkout(data) {
       var newQty = current - qty;
       sheet.getRange(i+1, 5).setValue(newQty);
       sheet.getRange(i+1, 7).setValue(newQty === 0 ? 'Out of Stock' : 'Available');
-      logHistory(data.id, all[i][1], 'CHECK-OUT', qty, (data.borrower||'')+(data.reason?' - '+data.reason:''), data.auth.username);
-      return {success:true, remaining:newQty};
+      var histResult = logHistory(data.id, all[i][1], 'CHECK-OUT', qty, (data.borrower||'')+(data.reason?' - '+data.reason:''), data.auth.username);
+      return {success:true, remaining:newQty, history: histResult};
     }
   }
   return {success:false, message:'Not found'};
@@ -172,13 +172,19 @@ function checkin(data) {
 // --- History ---
 
 function logHistory(itemId, itemName, action, qty, notes, user) {
-  var sheet = getSheet(HISTORY_SHEET);
-  if (!sheet) {
-    sheet = SpreadsheetApp.openById(SPREADSHEET_ID).insertSheet(HISTORY_SHEET);
-    sheet.appendRow(['Date','ItemID','ItemName','Action','Quantity','Notes','User']);
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(HISTORY_SHEET);
+    if (!sheet) {
+      sheet = ss.insertSheet(HISTORY_SHEET);
+      sheet.appendRow(['Date','ItemID','ItemName','Action','Quantity','Notes','User']);
+    }
+    var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd MMM yyyy, hh:mm a');
+    sheet.appendRow([now, String(itemId), String(itemName), String(action), String(qty), String(notes||''), String(user||'')]);
+    return {logged: true};
+  } catch(err) {
+    return {logged: false, error: err.toString()};
   }
-  var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd MMM yyyy, hh:mm a');
-  sheet.appendRow([now, itemId, itemName, action, String(qty), notes||'', user||'']);
 }
 
 // --- Helpers ---
