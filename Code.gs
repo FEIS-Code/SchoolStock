@@ -160,9 +160,12 @@ function checkin(data) {
 
 function logHistory(itemId, itemName, action, qty, notes, user) {
   var sheet = getSheet(HISTORY_SHEET);
-  if (!sheet) return;
+  if (!sheet) {
+    sheet = SpreadsheetApp.openById(SPREADSHEET_ID).insertSheet(HISTORY_SHEET);
+    sheet.appendRow(['Date','ItemID','ItemName','Action','Quantity','Notes','User']);
+  }
   var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd MMM yyyy, hh:mm a');
-  sheet.appendRow([now, itemId, itemName, action, qty, notes||'', user||'']);
+  sheet.appendRow([now, itemId, itemName, action, String(qty), notes||'', user||'']);
 }
 
 // --- Helpers ---
